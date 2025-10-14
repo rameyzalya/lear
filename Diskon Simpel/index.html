@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kalkulator Diskon</title>
+    <style>
+        body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
+        .kalkulator{background:white;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);width:350px;}
+        h1{text-align:center;color:#333;margin-bottom:15px;}
+        input,select,button{width:100%;padding:8px;margin:5px 0;border:2px solid #ddd;border-radius:5px;font-size:14px;box-sizing:border-box;}
+        button{background:#667eea;color:white;border:none;cursor:pointer;margin-top:8px;}
+        .hasil{margin-top:15px;padding:12px;background:#f8f9fa;border-radius:5px;display:none;}
+        .hasil.muncul{display:block;}
+        .hasil div{display:flex;justify-content:space-between;margin:3px 0;font-size:13px;}
+        .total{font-weight:bold;border-top:1px solid #ddd;padding-top:5px;margin-top:5px;}
+        .error{color:#e53e3e;margin-top:8px;padding:6px;background:#fed7d7;border-radius:3px;display:none;text-align:center;font-weight:bold;}
+        .error.muncul{display:block;}
+    </style>
+</head>
+<body>
+    <div class="kalkulator">
+        <h1>Kalkulator Diskon</h1>
+        
+        <input type="text" id="nama" placeholder="Nama barang">
+        <select id="kategori">
+            <option>Elektronik</option><option>Pakaian</option><option>Makanan</option><option>Lainnya</option>
+        </select>
+        <input type="text" id="harga" placeholder="Harga barang" oninput="formatAngka(this)">
+        <input type="number" id="diskon" placeholder="Diskon %" min="0" max="100">
+        
+        <button onclick="hitung()">Hitung Diskon</button>
+
+        <div class="hasil" id="hasil">
+            <h3 id="hasilNama">-</h3>
+            <div><span>Kategori:</span><span id="hasilKategori">-</span></div>
+            <div><span>Harga Awal:</span><span id="hargaAwal">-</span></div>
+            <div><span>Diskon:</span><span id="nilaiDiskon">-</span></div>
+            <div class="total"><span>Total Harga:</span><span id="totalHarga">-</span></div>
+        </div>
+
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        function formatAngka(input) {
+            // Hapus semua karakter selain angka
+            let value = input.value.replace(/\D/g, '');
+            
+            // Format dengan titik setiap 3 digit
+            if (value.length > 3) {
+                value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+            
+            input.value = value;
+        }
+
+        function formatRupiah(angka) {
+            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function hitung() {
+            const nama = document.getElementById('nama').value.trim();
+            const kategori = document.getElementById('kategori').value;
+            const hargaInput = document.getElementById('harga').value;
+            const diskon = parseFloat(document.getElementById('diskon').value);
+            const error = document.getElementById('error');
+            const hasil = document.getElementById('hasil');
+
+            error.classList.remove('muncul');
+            hasil.classList.remove('muncul');
+
+            if (!nama || !hargaInput || !diskon) {
+                tampilkanError('Harap isi semua field!');
+                return;
+            }
+
+            // Konversi harga dari format dengan titik ke angka
+            const harga = parseInt(hargaInput.replace(/\./g, ''));
+            
+            if (harga <= 0) {
+                tampilkanError('Harga harus lebih dari 0!');
+                return;
+            }
+
+            if (diskon > 100 || diskon < 0) {
+                tampilkanError('Diskon harus antara 0-100%!');
+                return;
+            }
+
+            const nilaiDiskon = harga * (diskon / 100);
+            const totalHarga = harga - nilaiDiskon;
+
+            tampilkanHasil(nama, kategori, harga, diskon, nilaiDiskon, totalHarga);
+        }
+
+        function tampilkanError(pesan) {
+            const error = document.getElementById('error');
+            error.textContent = pesan;
+            error.classList.add('muncul');
+        }
+
+        function tampilkanHasil(nama, kategori, harga, diskon, nilaiDiskon, totalHarga) {
+            document.getElementById('hasilNama').textContent = nama;
+            document.getElementById('hasilKategori').textContent = kategori;
+            document.getElementById('hargaAwal').textContent = formatRupiah(harga);
+            document.getElementById('nilaiDiskon').textContent = `${diskon}% (${formatRupiah(nilaiDiskon)})`;
+            document.getElementById('totalHarga').textContent = formatRupiah(totalHarga);
+            
+            document.getElementById('hasil').classList.add('muncul');
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') hitung();
+        });
+    </script>
+</body>
+</html>

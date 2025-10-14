@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Sederhana</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="calculator">
+            <h1>Kalkulator</h1>
+            
+            <div class="input-group">
+                <input type="text" id="angka1" placeholder="Angka pertama">
+                <input type="text" id="angka2" placeholder="Angka kedua">
+            </div>
+
+            <div class="buttons">
+                <div class="row">
+                    <button onclick="hitung('tambah')" class="btn-tambah">+</button>
+                    <button onclick="hitung('kurang')" class="btn-kurang">-</button>
+                </div>
+                <div class="row">
+                    <button onclick="hitung('kali')" class="btn-kali">×</button>
+                    <button onclick="hitung('bagi')" class="btn-bagi">÷</button>
+                </div>
+                <button onclick="resetKalkulator()" class="btn-reset">Reset</button>
+            </div>
+
+            <div class="result">
+                <h3>Hasil:</h3>
+                <div id="hasil">0</div>
+            </div>
+
+            <div id="error"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

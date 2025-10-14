@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kalkulator</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .kalkulator {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            width: 280px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .tombol {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+        }
+        .tambah { background: #48bb78; }
+        .kurang { background: #4299e1; }
+        .kali { background: #ed8936; }
+        .bagi { background: #f56565; }
+        .reset { background: #9f7aea; grid-column: span 2; }
+        .hasil {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        #error {
+            color: #e53e3e;
+            font-weight: bold;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="kalkulator">
+        <h1>Kalkulator</h1>
+        
+        <input type="text" id="a1" placeholder="Angka pertama">
+        <input type="text" id="a2" placeholder="Angka kedua">
+
+        <div class="tombol">
+            <button onclick="hitung('+')" class="tambah">+</button>
+            <button onclick="hitung('-')" class="kurang">-</button>
+            <button onclick="hitung('*')" class="kali">×</button>
+            <button onclick="hitung('/')" class="bagi">÷</button>
+            <button onclick="reset()" class="reset">Reset</button>
+        </div>
+
+        <div class="hasil">Hasil: <span id="hasil">0</span></div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        function hitung(op) {
+            let a = document.getElementById('a1').value;
+            let b = document.getElementById('a2').value;
+            let error = document.getElementById('error');
+            
+            error.textContent = '';
+            
+            if (!a || !b) {
+                error.textContent = 'Masukkan kedua angka!';
+                return;
+            }
+            
+            a = parseFloat(a);
+            b = parseFloat(b);
+            
+            if (isNaN(a) || isNaN(b)) {
+                error.textContent = 'Input harus angka!';
+                return;
+            }
+            
+            let hasil;
+            switch(op) {
+                case '+': hasil = a + b; break;
+                case '-': hasil = a - b; break;
+                case '*': hasil = a * b; break;
+                case '/': 
+                    if (b === 0) {
+                        error.textContent = 'Tidak bisa bagi dengan nol!';
+                        return;
+                    }
+                    hasil = a / b; 
+                    break;
+            }
+            
+            document.getElementById('hasil').textContent = hasil;
+        }
+
+        function reset() {
+            document.getElementById('a1').value = '';
+            document.getElementById('a2').value = '';
+            document.getElementById('hasil').textContent = '0';
+            document.getElementById('error').textContent = '';
+        }
+
+        // Validasi input angka
+        document.getElementById('a1').oninput = document.getElementById('a2').oninput = function() {
+            this.value = this.value.replace(/[^0-9.-]/g, '');
+        };
+    </script>
+</body>
+</html>

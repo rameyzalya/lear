@@ -1,0 +1,97 @@
+body {
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.kalkulator {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #5a6fd8;
+}
+
+.hasil {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    display: none;
+}
+
+.hasil.muncul {
+    display: block;
+}
+
+.hasil h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.hasil div {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.total {
+    font-weight: bold;
+    font-size: 16px;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+#error {
+    color: #e53e3e;
+    margin-top: 10px;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    background: #fed7d7;
+    border-radius: 4px;
+    display: none;
+}
+
+#error.muncul {
+    display: block;
+}

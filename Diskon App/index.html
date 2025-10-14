@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Diskon</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="kalkulator">
+            <h1>🛒 Kalkulator Diskon</h1>
+            
+            <input type="text" id="nama" placeholder="Nama barang">
+            <select id="kategori">
+                <option>Elektronik</option>
+                <option>Pakaian</option>
+                <option>Makanan</option>
+                <option>Lainnya</option>
+            </select>
+            <input type="text" id="harga" placeholder="Harga (contoh: 1.000.000)" oninput="formatAngka(this)">
+            <input type="number" id="diskon" placeholder="Diskon % (0-100)" max="100">
+
+            <button onclick="hitung()">Hitung</button>
+
+            <div class="hasil" id="hasil">
+                <h3 id="hasilNama">-</h3>
+                <div><span>Kategori:</span> <span id="hasilKategori">-</span></div>
+                <div><span>Harga:</span> <span id="hasilHarga">-</span></div>
+                <div><span>Diskon:</span> <span id="hasilDiskon">-</span></div>
+                <div class="total"><span>Total:</span> <span id="hasilTotal">-</span></div>
+            </div>
+
+            <div id="error"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

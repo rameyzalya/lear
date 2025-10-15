@@ -1,84 +1,103 @@
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let tabAktif = "aktif";
-let taskEdit = null;
+// Data dan state aplikasi
+let tasks = JSON.parse(localStorage.getItem("tasks")) || []; // Ambil data dari localStorage atau array kosong
+let currentTab = "aktif"; // Tab yang aktif (aktif/selesai)
+let editingId = null; // ID tugas yang sedang diedit
 
-function tambahTugas() {
+// Fungsi untuk menambah tugas baru
+function addTask() {
   const input = document.getElementById("taskInput");
   const text = input.value.trim();
-  if (!text || !document.getElementById("taskDate").value) return;
+  const date = document.getElementById("taskDate").value;
+  const error = document.getElementById("error");
 
+  error.textContent = ""; // Reset pesan error
+
+  // Validasi input
+  if (!text) {
+    error.textContent = "Nama tugas tidak boleh kosong";
+    return;
+  }
+
+  if (!date) {
+    error.textContent = "Tanggal harus dipilih";
+    return;
+  }
+
+  // Tambah tugas ke array
   tasks.push({
-    id: Date.now(),
+    id: Date.now(), // Generate ID unik berdasarkan timestamp
     text: text,
     completed: false,
     priority: document.getElementById("taskPriority").value,
-    date: document.getElementById("taskDate").value,
+    date: date,
   });
 
-  simpan();
-  render();
-  input.value = "";
+  save(); // Simpan ke localStorage
+  render(); // Render ulang daftar
+  input.value = ""; // Reset input
 }
 
-function gantiTab(tab) {
-  tabAktif = tab;
+// Fungsi untuk mengganti tab (aktif/selesai)
+function switchTab(tab) {
+  currentTab = tab;
+  // Update tampilan tab
   document
     .querySelectorAll(".tab")
     .forEach((t) => t.classList.remove("active"));
   event.target.classList.add("active");
+  editingId = null; // Batalkan edit jika ada
   render();
 }
 
+// Fungsi untuk menandai tugas selesai/belum
 function toggleSelesai(id) {
-  tasks = tasks.map((task) =>
-    task.id === id ? { ...task, completed: !task.completed } : task
-  );
-  simpan();
+  const task = tasks.find((t) => t.id === id);
+  if (task) task.completed = !task.completed; // Toggle status
+  save();
   render();
 }
 
-function bukaEdit(id) {
-  taskEdit = tasks.find((t) => t.id === id);
-  document.getElementById("editInput").value = taskEdit.text;
-  document.getElementById("editDate").value = taskEdit.date;
-  document.getElementById("editPriority").value = taskEdit.priority;
-  document.getElementById("editModal").style.display = "flex";
+// Fungsi untuk memulai mode edit
+function startEdit(id) {
+  editingId = id; // Set ID yang sedang diedit
+  render(); // Render form edit
 }
 
-function hapusTugas(id) {
-  if (confirm("Hapus tugas ini?")) {
-    tasks = tasks.filter((task) => task.id !== id);
-    simpan();
+// Fungsi untuk menyimpan hasil edit
+function saveEdit(id) {
+  const task = tasks.find((t) => t.id === id);
+  if (task) {
+    // Update data tugas
+    task.text = document.getElementById(`editText-${id}`).value.trim();
+    task.date = document.getElementById(`editDate-${id}`).value;
+    task.priority = document.getElementById(`editPriority-${id}`).value;
+    save();
+    editingId = null; // Keluar dari mode edit
     render();
   }
 }
 
-function simpanEdit() {
-  if (taskEdit) {
-    taskEdit.text = document.getElementById("editInput").value.trim();
-    taskEdit.date = document.getElementById("editDate").value;
-    taskEdit.priority = document.getElementById("editPriority").value;
-    simpan();
-    render();
-    tutupModal();
-  }
+// Fungsi untuk menghapus tugas
+function hapusTask(id) {
+  tasks = tasks.filter((task) => task.id !== id); // Filter out tugas yang dihapus
+  save();
+  render();
 }
 
-function tutupModal() {
-  document.getElementById("editModal").style.display = "none";
-  taskEdit = null;
-}
-
+// Fungsi utama untuk merender daftar tugas
 function render() {
   const list = document.getElementById("taskList");
-  const filteredTasks = tasks.filter((task) =>
-    tabAktif === "aktif" ? !task.completed : task.completed
+
+  // Filter tugas berdasarkan tab aktif
+  const filtered = tasks.filter((task) =>
+    currentTab === "aktif" ? !task.completed : task.completed
   );
 
-  if (filteredTasks.length === 0) {
+  // Tampilkan pesan jika tidak ada tugas
+  if (filtered.length === 0) {
     list.innerHTML = `<div style="text-align:center; color:#666; padding:40px;">
             ${
-              tabAktif === "aktif"
+              currentTab === "aktif"
                 ? "Tidak ada tugas aktif"
                 : "Tidak ada tugas selesai"
             }
@@ -86,55 +105,84 @@ function render() {
     return;
   }
 
-  list.innerHTML = filteredTasks
-    .map(
-      (task) => `
-        <div class="task-item ${task.completed ? "selesai" : ""} ${
-        task.priority
-      }">
-            <input type="checkbox" class="task-checkbox" 
-                   ${task.completed ? "checked" : ""} 
-                   onchange="toggleSelesai(${task.id})">
-            <div class="task-content">
-                <div class="task-text ${task.completed ? "selesai" : ""}">
-                    ${task.text}
-                </div>
-                <div class="task-details">
-                    <span class="priority ${
-                      task.priority
-                    }">${task.priority.toUpperCase()}</span>
-                    <span>📅 ${new Date(task.date).toLocaleDateString(
-                      "id-ID"
-                    )}</span>
+  // Render daftar tugas
+  list.innerHTML = filtered
+    .map((task) =>
+      // Jika sedang mode edit, tampilkan form edit
+      editingId === task.id
+        ? `
+            <div class="task-item ${task.priority}">
+                <div class="task-content">
+                    <input type="text" value="${task.text}" id="editText-${
+            task.id
+          }">
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="date" value="${task.date}" id="editDate-${
+            task.id
+          }">
+                        <select id="editPriority-${task.id}">
+                            <option value="rendah" ${
+                              task.priority == "rendah" ? "selected" : ""
+                            }>Rendah</option>
+                            <option value="sedang" ${
+                              task.priority == "sedang" ? "selected" : ""
+                            }>Sedang</option>
+                            <option value="tinggi" ${
+                              task.priority == "tinggi" ? "selected" : ""
+                            }>Tinggi</option>
+                        </select>
+                    </div>
+                    <div class="task-actions" style="margin-top:5px;">
+                        <button class="edit-btn" onclick="saveEdit(${
+                          task.id
+                        })">Simpan</button>
+                        <button class="hapus-btn" onclick="editingId=null; render()">Batal</button>
+                    </div>
                 </div>
             </div>
-            <div class="task-actions">
-                <button class="edit-btn" onclick="bukaEdit(${
-                  task.id
-                })">Edit</button>
-                <button class="hapus-btn" onclick="hapusTugas(${
-                  task.id
-                })">Hapus</button>
+        `
+        : // Jika tidak, tampilkan tugas normal
+          `
+            <div class="task-item ${task.completed ? "selesai" : ""} ${
+            task.priority
+          }">
+                <input type="checkbox" class="task-checkbox" ${
+                  task.completed ? "checked" : ""
+                } onchange="toggleSelesai(${task.id})">
+                <div class="task-content">
+                    <div class="task-text ${task.completed ? "selesai" : ""}">${
+            task.text
+          }</div>
+                    <div class="task-details">
+                        <span class="priority ${
+                          task.priority
+                        }">${task.priority.toUpperCase()}</span>
+                        <span>📅 ${new Date(task.date).toLocaleDateString(
+                          "id-ID"
+                        )}</span>
+                    </div>
+                </div>
+                <div class="task-actions">
+                    <button class="edit-btn" onclick="startEdit(${
+                      task.id
+                    })">Edit</button>
+                    <button class="hapus-btn" onclick="hapusTask(${
+                      task.id
+                    })">Hapus</button>
+                </div>
             </div>
-        </div>
-    `
+        `
     )
-    .join("");
+    .join(""); // Gabungkan semua HTML
 }
 
-function simpan() {
+// Fungsi untuk menyimpan data ke localStorage
+function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-// Event listener untuk Enter key
-document.getElementById("taskInput").addEventListener("keypress", function (e) {
-  if (e.key === "Enter") tambahTugas();
-});
-
-// Init
-document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("taskDate").value = new Date()
-    .toISOString()
-    .split("T")[0];
-  render();
-});
+// Inisialisasi aplikasi saat halaman dimuat
+document.getElementById("taskDate").value = new Date()
+  .toISOString()
+  .split("T")[0]; // Set tanggal default
+render(); // Render awal

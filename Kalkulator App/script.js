@@ -1,72 +1,133 @@
-// 1. Struktur Data
-const data = {
-  angka1: 0,
-  angka2: 0,
-  hasil: 0,
-};
+function formatAngka(input) {
+  let value = input.value;
 
-// 2. Validasi Input
-function validasiInput() {
+  // Izinkan angka, koma, dan minus di depan
+  value = value.replace(/[^\d,-]/g, "");
+
+  // Hapus 0 di depan jika user mengetik angka setelahnya
+  if (value.startsWith("0") && value.length > 1 && !value.startsWith("0,")) {
+    // Cek karakter kedua, jika angka maka hapus 0 di depan
+    const secondChar = value.charAt(1);
+    if (secondChar.match(/\d/)) {
+      value = value.substring(1);
+    }
+  }
+
+  // Pastikan minus hanya di depan
+  if (value.includes("-")) {
+    if (value.indexOf("-") !== 0) {
+      value = value.replace(/-/g, "");
+    } else if (value.match(/-/g).length > 1) {
+      value = "-" + value.replace(/-/g, "");
+    }
+  }
+
+  // Hanya izinkan satu koma
+  let parts = value.split(",");
+  if (parts.length > 2) {
+    value = parts[0] + "," + parts.slice(1).join("");
+  }
+
+  // Format bagian sebelum koma
+  if (parts[0]) {
+    let integerPart = parts[0].replace(/\D/g, "");
+
+    // Hapus 0 di depan untuk integer part
+    if (
+      integerPart.length > 1 &&
+      integerPart.startsWith("0") &&
+      !integerPart.startsWith("0,")
+    ) {
+      integerPart = integerPart.replace(/^0+/, "");
+      // Jika semua angka dihapus, kembalikan 0
+      if (integerPart === "") integerPart = "0";
+    }
+
+    if (integerPart.length > 3) {
+      integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    parts[0] = integerPart;
+  }
+
+  // Tambahkan kembali minus jika ada
+  if (value.startsWith("-")) {
+    parts[0] = "-" + parts[0];
+  }
+
+  input.value = parts.join(",");
+}
+
+function hitung(operasi) {
   const angka1 = document.getElementById("angka1").value;
   const angka2 = document.getElementById("angka2").value;
   const error = document.getElementById("error");
+  const hasilElement = document.getElementById("hasil");
 
+  // Reset tampilan error dan hasil
   error.style.display = "none";
+  hasilElement.textContent = "0"; // Hapus hasil sebelumnya
 
-  if (angka1 === "" || angka2 === "") {
+  if (!angka1 || !angka2) {
     tampilkanError("Masukkan kedua angka!");
-    return false;
+    return;
   }
 
-  if (isNaN(angka1) || isNaN(angka2)) {
-    tampilkanError("Input harus berupa angka!");
-    return false;
+  // Konversi ke angka - sama seperti kode diskon
+  const num1 = parseFloat(angka1.replace(/\./g, "").replace(/,/g, "."));
+  const num2 = parseFloat(angka2.replace(/\./g, "").replace(/,/g, "."));
+
+  if (isNaN(num1) || isNaN(num2)) {
+    tampilkanError("Format angka tidak valid!");
+    return;
   }
 
-  data.angka1 = parseFloat(angka1);
-  data.angka2 = parseFloat(angka2);
-  return true;
-}
-
-// 3. Logika Perhitungan
-function hitung(operasi) {
-  if (!validasiInput()) return;
-
+  let hasil;
   switch (operasi) {
     case "tambah":
-      data.hasil = data.angka1 + data.angka2;
+      hasil = num1 + num2;
       break;
     case "kurang":
-      data.hasil = data.angka1 - data.angka2;
+      hasil = num1 - num2;
       break;
     case "kali":
-      data.hasil = data.angka1 * data.angka2;
+      hasil = num1 * num2;
       break;
     case "bagi":
-      if (data.angka2 === 0) {
+      if (num2 === 0) {
         tampilkanError("Tidak bisa membagi dengan nol!");
+        hasilElement.textContent = "0"; // Pastikan hasil direset
         return;
       }
-      data.hasil = data.angka1 / data.angka2;
+      hasil = num1 / num2;
       break;
   }
 
-  tampilkanHasil();
+  // Format hasil sama seperti kode diskon
+  hasilElement.textContent = formatHasil(hasil);
 }
 
-// 4. Tampilkan Hasil
-function tampilkanHasil() {
-  document.getElementById("hasil").textContent = data.hasil;
+function tampilkanError(pesan) {
+  const error = document.getElementById("error");
+  const hasilElement = document.getElementById("hasil");
+
+  error.textContent = pesan;
+  error.style.display = "block";
+  hasilElement.textContent = "0"; // Reset hasil ke 0 saat error
 }
 
-// 5. Tampilkan Error
+function formatHasil(angka) {
+  return angka.toLocaleString("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 6,
+  });
+}
+
 function tampilkanError(pesan) {
   const error = document.getElementById("error");
   error.textContent = pesan;
   error.style.display = "block";
 }
 
-// 6. Reset Kalkulator
 function resetKalkulator() {
   document.getElementById("angka1").value = "";
   document.getElementById("angka2").value = "";
@@ -74,11 +135,16 @@ function resetKalkulator() {
   document.getElementById("error").style.display = "none";
 }
 
-// Event Listener untuk validasi input angka
-document.getElementById("angka1").addEventListener("input", function (e) {
-  this.value = this.value.replace(/[^0-9.-]/g, "");
+// Event listeners untuk format otomatis
+document.getElementById("angka1").addEventListener("input", function () {
+  formatAngka(this);
 });
 
-document.getElementById("angka2").addEventListener("input", function (e) {
-  this.value = this.value.replace(/[^0-9.-]/g, "");
+document.getElementById("angka2").addEventListener("input", function () {
+  formatAngka(this);
+});
+
+// Enter untuk menghitung
+document.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") hitung("tambah");
 });

@@ -111,7 +111,7 @@ button:hover {
     min-height: 40px;
 }
 
-#error {
+#error {    
     color: #fed7d7;
     background: #c53030;
     padding: 12px;

@@ -1,150 +1,199 @@
+// Elemen DOM
+const elements = {
+  angka1: document.getElementById("angka1"),
+  angka2: document.getElementById("angka2"),
+  error: document.getElementById("error"),
+  hasil: document.getElementById("hasil"),
+};
+
+// Format input angka
 function formatAngka(input) {
-  let value = input.value;
+  let value = input.value.replace(/[^\d,-]/g, "");
 
-  // Izinkan angka, koma, dan minus di depan
-  value = value.replace(/[^\d,-]/g, "");
-
-  // Hapus 0 di depan jika user mengetik angka setelahnya
+  // Handle leading zero
   if (value.startsWith("0") && value.length > 1 && !value.startsWith("0,")) {
-    // Cek karakter kedua, jika angka maka hapus 0 di depan
     const secondChar = value.charAt(1);
-    if (secondChar.match(/\d/)) {
-      value = value.substring(1);
-    }
+    if (secondChar.match(/\d/)) value = value.substring(1);
   }
 
-  // Pastikan minus hanya di depan
+  // Handle minus sign
   if (value.includes("-")) {
     if (value.indexOf("-") !== 0) {
       value = value.replace(/-/g, "");
-    } else if (value.match(/-/g).length > 1) {
+    } else if (value.match(/-/g)?.length > 1) {
       value = "-" + value.replace(/-/g, "");
     }
   }
 
-  // Hanya izinkan satu koma
+  // Format number with thousands separator
   let parts = value.split(",");
-  if (parts.length > 2) {
-    value = parts[0] + "," + parts.slice(1).join("");
-  }
+  if (parts.length > 2) value = parts[0] + "," + parts.slice(1).join("");
 
-  // Format bagian sebelum koma
   if (parts[0]) {
     let integerPart = parts[0].replace(/\D/g, "");
 
-    // Hapus 0 di depan untuk integer part
+    // Remove leading zeros
     if (
       integerPart.length > 1 &&
       integerPart.startsWith("0") &&
       !integerPart.startsWith("0,")
     ) {
-      integerPart = integerPart.replace(/^0+/, "");
-      // Jika semua angka dihapus, kembalikan 0
-      if (integerPart === "") integerPart = "0";
+      integerPart = integerPart.replace(/^0+/, "") || "0";
     }
 
+    // Add thousands separator
     if (integerPart.length > 3) {
       integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
-    parts[0] = integerPart;
-  }
 
-  // Tambahkan kembali minus jika ada
-  if (value.startsWith("-")) {
-    parts[0] = "-" + parts[0];
+    parts[0] = value.startsWith("-") ? "-" + integerPart : integerPart;
   }
 
   input.value = parts.join(",");
 }
 
+// Main calculation function
 function hitung(operasi) {
-  const angka1 = document.getElementById("angka1").value;
-  const angka2 = document.getElementById("angka2").value;
-  const error = document.getElementById("error");
-  const hasilElement = document.getElementById("hasil");
+  const { angka1, angka2, hasil } = elements;
+  const num1 = parseNumber(angka1.value);
+  const num2 = parseNumber(angka2.value);
 
-  // Reset tampilan error dan hasil
-  error.style.display = "none";
-  hasilElement.textContent = "0"; // Hapus hasil sebelumnya
+  // Reset error display
+  elements.error.style.display = "none";
 
-  if (!angka1 || !angka2) {
-    tampilkanError("Masukkan kedua angka!");
-    return;
+  // Input validation
+  if (!validateInput(angka1.value, angka2.value, num1, num2)) return;
+
+  try {
+    const operationResult = calculate(operasi, num1, num2);
+    if (!isFinite(operationResult)) {
+      tampilkanErrorDiHasil("Hasil perhitungan tidak valid!");
+      return;
+    }
+
+    tampilkanHasil(fixNegativeZero(operationResult));
+  } catch {
+    tampilkanErrorDiHasil("Terjadi kesalahan dalam perhitungan!");
   }
-
-  // Konversi ke angka - sama seperti kode diskon
-  const num1 = parseFloat(angka1.replace(/\./g, "").replace(/,/g, "."));
-  const num2 = parseFloat(angka2.replace(/\./g, "").replace(/,/g, "."));
-
-  if (isNaN(num1) || isNaN(num2)) {
-    tampilkanError("Format angka tidak valid!");
-    return;
-  }
-
-  let hasil;
-  switch (operasi) {
-    case "tambah":
-      hasil = num1 + num2;
-      break;
-    case "kurang":
-      hasil = num1 - num2;
-      break;
-    case "kali":
-      hasil = num1 * num2;
-      break;
-    case "bagi":
-      if (num2 === 0) {
-        tampilkanError("Tidak bisa membagi dengan nol!");
-        hasilElement.textContent = "0"; // Pastikan hasil direset
-        return;
-      }
-      hasil = num1 / num2;
-      break;
-  }
-
-  // Format hasil sama seperti kode diskon
-  hasilElement.textContent = formatHasil(hasil);
 }
 
-function tampilkanError(pesan) {
-  const error = document.getElementById("error");
-  const hasilElement = document.getElementById("hasil");
+// Helper functions
+function parseNumber(value) {
+  return parseFloat(value.replace(/\./g, "").replace(/,/g, "."));
+}
 
-  error.textContent = pesan;
-  error.style.display = "block";
-  hasilElement.textContent = "0"; // Reset hasil ke 0 saat error
+function validateInput(val1, val2, num1, num2) {
+  if (!val1.trim() || !val2.trim()) {
+    tampilkanErrorDiHasil("Masukkan kedua angka!");
+    return false;
+  }
+
+  if (isNaN(num1) || isNaN(num2)) {
+    tampilkanErrorDiHasil("Format angka tidak valid!");
+    return false;
+  }
+
+  if (!isFinite(num1) || !isFinite(num2)) {
+    tampilkanErrorDiHasil("Angka terlalu besar!");
+    return false;
+  }
+
+  return true;
+}
+
+function calculate(operation, num1, num2) {
+  const operations = {
+    tambah: () => num1 + num2,
+    kurang: () => num1 - num2,
+    kali: () => num1 * num2,
+    bagi: () => {
+      if (num2 === 0) throw new Error("Division by zero");
+      return num1 / num2;
+    },
+  };
+
+  if (!operations[operation]) throw new Error("Invalid operation");
+  return operations[operation]();
+}
+
+function fixNegativeZero(number) {
+  return number === 0 || number?.toString() === "-0" ? 0 : number;
 }
 
 function formatHasil(angka) {
+  if ((Math.abs(angka) < 0.000001 && angka !== 0) || Math.abs(angka) > 1e12) {
+    return angka.toExponential(2);
+  }
+
   return angka.toLocaleString("id-ID", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 6,
   });
 }
 
-function tampilkanError(pesan) {
-  const error = document.getElementById("error");
-  error.textContent = pesan;
-  error.style.display = "block";
+// Display functions
+function tampilkanHasil(angka) {
+  const { hasil } = elements;
+  hasil.textContent = formatHasil(angka);
+  setHasilStyle("white", "25px", "bold");
+}
+
+function tampilkanErrorDiHasil(pesan) {
+  const { hasil } = elements;
+  hasil.textContent = pesan;
+  setHasilStyle("#fed7d7", "16px", "normal");
+}
+
+function setHasilStyle(color, fontSize, fontWeight) {
+  const { hasil } = elements;
+  hasil.style.color = color;
+  hasil.style.fontSize = fontSize;
+  hasil.style.fontWeight = fontWeight;
+}
+
+function resetHasilKeNormal() {
+  const { hasil } = elements;
+  if (hasil.style.color === "rgb(254, 215, 215)") {
+    hasil.textContent = "0";
+    setHasilStyle("white", "25px", "bold");
+  }
 }
 
 function resetKalkulator() {
-  document.getElementById("angka1").value = "";
-  document.getElementById("angka2").value = "";
-  document.getElementById("hasil").textContent = "0";
-  document.getElementById("error").style.display = "none";
+  elements.angka1.value = "";
+  elements.angka2.value = "";
+  elements.hasil.textContent = "0";
+  elements.error.style.display = "none";
+  setHasilStyle("white", "25px", "bold");
 }
 
-// Event listeners untuk format otomatis
-document.getElementById("angka1").addEventListener("input", function () {
-  formatAngka(this);
-});
+// Event listeners
+function initEventListeners() {
+  // Format angka on input
+  [elements.angka1, elements.angka2].forEach((input) => {
+    input.addEventListener("input", () => {
+      formatAngka(input);
+      resetHasilKeNormal();
+    });
+  });
 
-document.getElementById("angka2").addEventListener("input", function () {
-  formatAngka(this);
-});
+  // Prevent invalid minus input
+  [elements.angka1, elements.angka2].forEach((input) => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "-" && e.target.selectionStart !== 0) {
+        e.preventDefault();
+      }
+    });
+  });
 
-// Enter untuk menghitung
-document.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") hitung("tambah");
+  // Enter to calculate
+  document.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") hitung("tambah");
+  });
+}
+
+// Initialize
+document.addEventListener("DOMContentLoaded", () => {
+  elements.hasil.textContent = "0";
+  initEventListeners();
 });

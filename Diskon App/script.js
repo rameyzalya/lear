@@ -1,15 +1,31 @@
 function formatAngka(input) {
-  let value = input.value.replace(/\D/g, "");
-  if (value.length > 3) {
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  let value = input.value;
+
+  // Izinkan hanya angka dan koma
+  value = value.replace(/[^\d,]/g, "");
+
+  // Hanya izinkan satu koma
+  let parts = value.split(",");
+  if (parts.length > 2) {
+    value = parts[0] + "," + parts.slice(1).join("");
   }
-  input.value = value;
+
+  // Format bagian sebelum koma
+  if (parts[0]) {
+    let integerPart = parts[0].replace(/\D/g, "");
+    if (integerPart.length > 3) {
+      integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    parts[0] = integerPart;
+  }
+
+  input.value = parts.join(",");
 }
 
 function hitung() {
   const nama = document.getElementById("nama").value.trim();
   const kategori = document.getElementById("kategori").value;
-  const harga = document.getElementById("harga").value;
+  let harga = document.getElementById("harga").value;
   const diskon = parseFloat(document.getElementById("diskon").value);
 
   const error = document.getElementById("error");
@@ -23,9 +39,10 @@ function hitung() {
     return;
   }
 
-  const hargaNum = parseInt(harga.replace(/\./g, ""));
+  // Konversi harga - ganti koma dengan titik untuk perhitungan
+  const hargaNum = parseFloat(harga.replace(/\./g, "").replace(/,/g, "."));
 
-  if (hargaNum <= 0) {
+  if (isNaN(hargaNum) || hargaNum <= 0) {
     tampilkanError("Harga harus > 0!");
     return;
   }
@@ -48,8 +65,9 @@ function tampilkanError(pesan) {
 }
 
 function tampilkanHasil(nama, kategori, harga, diskon, nilaiDiskon, total) {
-  const format = (angka) =>
-    "Rp " + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const format = (angka) => {
+    return "Rp " + angka.toLocaleString("id-ID");
+  };
 
   document.getElementById("hasilNama").textContent = nama;
   document.getElementById("hasilKategori").textContent = kategori;

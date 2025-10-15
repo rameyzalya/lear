@@ -18,8 +18,8 @@
                 <option>Makanan</option>
                 <option>Lainnya</option>
             </select>
-            <input type="text" id="harga" placeholder="Harga (contoh: 1.000.000)" oninput="formatAngka(this)">
-            <input type="number" id="diskon" placeholder="Diskon % (0-100)" max="100">
+            <input type="text" id="harga" placeholder="Harga (contoh: 1.000.000 atau 1.500,75)" oninput="formatAngka(this)">
+            <input type="number" id="diskon" placeholder="Diskon % (0-100)" max="100" step="0.01">
 
             <button onclick="hitung()">Hitung</button>
 

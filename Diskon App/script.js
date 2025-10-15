@@ -1,17 +1,19 @@
 function formatAngka(input) {
-  let value = input.value.replace(/[^\d,]/g, "");
+  let value = input.value;
 
-  // Hapus 0 di awal angka (kecuali 0,)
-  if (value.length > 1 && value[0] === "0" && value[1] !== ",") {
-    value = value.substring(1);
-  }
+  // Hapus karakter minus jika ada
+  value = value.replace(/-/g, "");
 
+  // Izinkan hanya angka dan koma
+  value = value.replace(/[^\d,]/g, "");
+
+  // Hanya izinkan satu koma
   let parts = value.split(",");
-
   if (parts.length > 2) {
     value = parts[0] + "," + parts.slice(1).join("");
   }
 
+  // Format bagian sebelum koma
   if (parts[0]) {
     let integerPart = parts[0].replace(/\D/g, "");
     if (integerPart.length > 3) {
@@ -23,27 +25,30 @@ function formatAngka(input) {
   input.value = parts.join(",");
 }
 
-function formatDiskon(input) {
-  let value = input.value.replace(/[^\d.]/g, "");
+function validasiDiskon(input) {
+  let value = parseFloat(input.value);
 
-  // Hapus 0 di awal angka (kecuali 0.)
-  if (value.length > 1 && value[0] === "0" && value[1] !== ".") {
-    value = value.substring(1);
+  // Jika nilai negatif, set ke 0
+  if (value < 0) {
+    input.value = 0;
   }
 
-  // Validasi range
-  const numValue = parseFloat(value);
-  if (numValue < 0) value = "0";
-  if (numValue > 100) value = "100";
+  // Jika nilai lebih dari 100, set ke 100
+  if (value > 100) {
+    input.value = 100;
+  }
 
-  input.value = value;
+  // Jika NaN, set ke empty string
+  if (isNaN(value)) {
+    input.value = "";
+  }
 }
 
 function hitung() {
   const nama = document.getElementById("nama").value.trim();
   const kategori = document.getElementById("kategori").value;
   let harga = document.getElementById("harga").value;
-  let diskon = document.getElementById("diskon").value;
+  let diskon = parseFloat(document.getElementById("diskon").value);
 
   const error = document.getElementById("error");
   const hasil = document.getElementById("hasil");
@@ -51,27 +56,44 @@ function hitung() {
   error.classList.remove("muncul");
   hasil.classList.remove("muncul");
 
-  if (!nama || !harga || !diskon) {
+  if (!nama || !harga || isNaN(diskon)) {
     tampilkanError("Harap isi semua field!");
     return;
   }
 
-  // Validasi dan konversi harga
-  const hargaNum = parseFloat(harga.replace(/\./g, "").replace(/,/g, "."));
-  if (isNaN(hargaNum) || hargaNum <= 0) {
-    tampilkanError("Harga harus lebih dari 0!");
+  // Validasi harga tidak boleh kosong atau hanya berisi format
+  if (harga.replace(/[.,]/g, "") === "") {
+    tampilkanError("Harga tidak valid!");
     return;
   }
 
-  // Validasi diskon
-  diskon = parseFloat(diskon);
-  if (isNaN(diskon) || diskon < 0 || diskon > 100) {
-    tampilkanError("Diskon harus 0-100%!");
+  // Konversi harga - ganti koma dengan titik untuk perhitungan
+  const hargaNum = parseFloat(harga.replace(/\./g, "").replace(/,/g, "."));
+
+  if (isNaN(hargaNum) || hargaNum <= 0) {
+    tampilkanError("Harga harus lebih besar dari 0!");
+    return;
+  }
+
+  // Jika diskon lebih dari 100, otomatis set ke 100
+  if (diskon > 100) {
+    diskon = 100;
+    document.getElementById("diskon").value = 100;
+  }
+
+  if (diskon < 0) {
+    tampilkanError("Diskon harus antara 0-100%!");
     return;
   }
 
   const nilaiDiskon = hargaNum * (diskon / 100);
   const total = hargaNum - nilaiDiskon;
+
+  // Validasi total tidak boleh negatif
+  if (total < 0) {
+    tampilkanError("Total harga tidak boleh negatif!");
+    return;
+  }
 
   tampilkanHasil(nama, kategori, hargaNum, diskon, nilaiDiskon, total);
 }
@@ -83,7 +105,9 @@ function tampilkanError(pesan) {
 }
 
 function tampilkanHasil(nama, kategori, harga, diskon, nilaiDiskon, total) {
-  const format = (angka) => "Rp " + angka.toLocaleString("id-ID");
+  const format = (angka) => {
+    return "Rp " + angka.toLocaleString("id-ID");
+  };
 
   document.getElementById("hasilNama").textContent = nama;
   document.getElementById("hasilKategori").textContent = kategori;
@@ -96,17 +120,57 @@ function tampilkanHasil(nama, kategori, harga, diskon, nilaiDiskon, total) {
   document.getElementById("hasil").classList.add("muncul");
 }
 
-// Validasi real-time untuk diskon
+// Event listener untuk real-time validation pada diskon
 document.getElementById("diskon").addEventListener("input", function (e) {
-  formatDiskon(this);
+  let value = parseFloat(this.value);
+
+  if (value > 100) {
+    this.value = 100;
+  }
+
+  if (value < 0) {
+    this.value = 0;
+  }
 });
 
-// Validasi real-time untuk harga
-document.getElementById("harga").addEventListener("input", function (e) {
-  this.value = this.value.replace(/-/g, "");
+// Event listener untuk mencegah input minus pada field diskon
+document.getElementById("diskon").addEventListener("keydown", function (e) {
+  // Prevent minus sign
+  if (e.key === "-" || e.key === "Subtract") {
+    e.preventDefault();
+  }
 });
 
-// Enter untuk hitung
+// Event listener untuk mencegah paste nilai negatif pada diskon
+document.getElementById("diskon").addEventListener("paste", function (e) {
+  const pasteData = e.clipboardData.getData("text");
+  if (pasteData.includes("-")) {
+    e.preventDefault();
+    // Replace dengan nilai positif
+    const positiveValue = pasteData.replace(/-/g, "");
+    this.value = positiveValue;
+  }
+});
+
+// Event listener untuk mencegah input minus pada field harga
+document.getElementById("harga").addEventListener("keydown", function (e) {
+  // Prevent minus sign
+  if (e.key === "-" || e.key === "Subtract") {
+    e.preventDefault();
+  }
+});
+
+// Event listener untuk mencegah paste nilai negatif pada harga
+document.getElementById("harga").addEventListener("paste", function (e) {
+  const pasteData = e.clipboardData.getData("text");
+  if (pasteData.includes("-")) {
+    e.preventDefault();
+    // Replace dengan nilai positif
+    const positiveValue = pasteData.replace(/-/g, "");
+    this.value = positiveValue;
+  }
+});
+
 document.addEventListener("keypress", (e) => {
   if (e.key === "Enter") hitung();
 });
